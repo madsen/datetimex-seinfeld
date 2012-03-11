@@ -63,13 +63,20 @@ has increment => (
 
 This is a CodeRef that allows you to skip specified periods.  It is
 called with one argument, the DateTime at which the period begins.  If
-the CodeRef returns true, any events taking place during this period
-are instead considered to take place in the next period.  (The CodeRef
-must not modify the DateTime object it was given.)  (optional)
+the CodeRef returns a true value, any events taking place during this
+period are instead considered to take place in the next period.  (The
+CodeRef must not modify the DateTime object it was given.)  (optional)
 
 For example, to skip Sundays:
 
   skip => sub { shift->day_of_week == 7 }
+
+Using C<skip> does I<not> change the start time of the next period (as
+reported by C<period_containing>, C<start_period>, or C<end_period>).
+The idea is that events will not normally occur during skipped periods
+(or you probably shouldn't be skipping them).  This means that it is
+possible for an event to be less than the start time of the period
+containing it.
 
 =cut
 
@@ -84,7 +91,7 @@ has skip => (
 
   $info = $seinfeld->find_chains( \@events );
 
-This calculates the Seinfeld chain from the events in C<@events> (an
+This calculates Seinfeld chains from the events in C<@events> (an
 array of DateTime objects which must be sorted in ascending order).
 Note that you must pass an array reference, not a list.
 
@@ -92,7 +99,7 @@ The return value is a hashref describing the results.
 
 Two keys describe the number of periods.  C<total_periods> is the
 number of periods between the C<start_date> and
-C<$info->{last}{end_period}>.  C<marked_periods> is the number of
+C<< $info->{last}{end_period} >>.  C<marked_periods> is the number of
 periods that contained at least one event.  If C<marked_periods>
 equals C<total_periods>, then the events form a single chain of the
 same length.
@@ -121,13 +128,13 @@ a new chain.
 
 =item C<start_event>
 
-The DateTime of the first event of the chain (this is the same object
-that appeared in C<@events>, not a copy).
+The DateTime of the first event in the chain (this is the same object
+that appeared in C<@events>, not a clone).
 
-=item C<end_period>
+=item C<end_event>
 
-The DateTime of the last event in the chain (this is the same object
-that appeared in C<@events>, not a copy).
+The DateTime of the last event in the chain (again, the same object
+that appeared in C<@events>).
 
 =item C<length>
 
@@ -141,7 +148,13 @@ C<length>, but it can be more (if multiple events occurred in one period).
 =back
 
 Note: If C<@events> is empty, then C<last> and C<longest> will not
-exist in the hash.
+exist in the hash.  Otherwise, there will always be at least one
+chain, even if only of length 1.
+
+=diag C<start_date (%s) must be before first date (%s)>
+
+You must not pass an event to C<find_chains> that occurs before the
+C<start_date> of the first period.
 
 =cut
 
@@ -268,7 +281,8 @@ a sorted list of L<DateTime> objects.
 The term "Seinfeld chain" comes from advice attributed to comedian
 Jerry Seinfeld.  He got a large year-on-one-page calendar and marked a
 big red X on every day he wrote something.  The chain of continuous
-X's gave him a sense of accomplishment.
+X's gave him a sense of accomplishment and helped motivate him to
+write every day.
 (Source: L<http://lifehacker.com/281626/jerry-seinfelds-productivity-secret>)
 
 This module calculates the length of the longest such chain of

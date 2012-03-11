@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
  {
-  sort_attr   => 1,
+  sort_attr   => 0,
   sort_diag   => 1,
   sort_method => 1,
   # This template will be filled in by TemplateCJM:
