@@ -44,7 +44,7 @@ sub test
 
   unless (is_deeply($got, $expected)) {
     diag("Full result:\n");
-    for my $type (reverse sort keys %$got) {
+    for my $type (qw(longest last)) {
       diag(sprintf "   %-7s => {\n", $type);
       my $entry = $got->{$type};
 
@@ -61,6 +61,10 @@ sub test
       } # end for $key
       diag("   },\n");
     } # end for $type
+
+    for my $key (qw(marked_periods total_periods)) {
+      diag(sprintf "   %-14s => %d,\n", $key, $got->{$key});
+    }
   } # end unless test successful
 } # end test
 
@@ -105,7 +109,9 @@ test(['2012-01-01', { weeks => 1 }],
      end_event    => dt('2012-03-30'),
      length       => 6,
      num_events   => 6,
-   }
+   },
+   marked_periods => 12,
+   total_periods  => 13,
  }
 );
 
@@ -127,14 +133,16 @@ test(['2012-01-01', { weeks => 1 }],
    2012-04-04
  )],
  {
-   both ({
+   both({
      start_period => dt('2012-02-19'),
      end_period   => dt('2012-04-08'),
      start_event  => dt('2012-02-19'),
      end_event    => dt('2012-04-04'),
      length       => 7,
      num_events   => 7,
-   })
+   }),
+   marked_periods => 13,
+   total_periods  => 14,
  }
 );
 
@@ -183,11 +191,13 @@ test(['2012-01-01', { days => 1 }],
      length       => 6,
      num_events   => 6,
    },
+   marked_periods => 24,
+   total_periods  => 57,
  }
 );
 
 #---------------------------------------------------------------------
-test(['2012-01-01', { days => 1}, sub { shift->day_of_week == 7 } ],
+test(['2012-01-02', { days => 1}, sub { shift->day_of_week == 7 } ],
  [qw(
    2012-02-02
    2012-02-03
@@ -231,6 +241,8 @@ test(['2012-01-01', { days => 1}, sub { shift->day_of_week == 7 } ],
      length       => 5,
      num_events   => 5,
    },
+   marked_periods => 21,
+   total_periods  => 49,
  }
 );
 

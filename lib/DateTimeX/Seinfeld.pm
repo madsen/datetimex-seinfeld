@@ -88,7 +88,16 @@ This calculates the Seinfeld chain from the events in C<@events>
 (which must be sorted in ascending order).  Note that you must pass an
 array reference, not a list.
 
-On return, C<$info> will contain a hashref with two keys: C<last> (the
+On return, C<$info> will contain a hashref describing the results.
+
+Two keys describe the number of periods.  C<total_periods> is the
+number of periods between the C<start_date> and
+C<$info->{last}{end_period}>.  C<marked_periods> is the number of
+periods that contained at least one event.  If C<marked_periods>
+equals C<total_periods>, then the events form a single chain of the
+same length.
+
+Two keys describe the chains: C<last> (the
 last chain of events found) and C<longest> (the longest chain found).
 These may be the same chain.  The value of each key is a hashref
 describing that chain with the following keys:
@@ -125,7 +134,8 @@ C<length>, but it can be more (if multiple events occurred in one period).
 
 =back
 
-Note:  If C<@events> is empty, then the return value will be an empty hashref.
+Note: If C<@events> is empty, then C<last> and C<longest> will not
+exist in the hash.
 
 =cut
 
@@ -133,7 +143,7 @@ sub find_chains
 {
   my ($self, $dates) = @_;
 
-  my %info;
+  my %info = (total_periods => 0, marked_periods => 0);
 
   my $end = $self->start_date->clone;
   my $inc = $self->increment;
@@ -161,7 +171,11 @@ sub find_chains
     };
 
     ++$info{last}{num_events};
-    ++$info{last}{length} if $count; # first event in period
+    if ($count) { # first event in period
+      ++$info{last}{length};
+      ++$info{marked_periods};
+      $info{total_periods} += $count;
+    }
     $info{last}{end_event}  = $d;
     $info{last}{end_period} = $end->clone;
 
