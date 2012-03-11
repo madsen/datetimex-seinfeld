@@ -10,7 +10,7 @@ use 5.010;
 use strict;
 use warnings;
 
-use Test::More 0.88 tests => 4;
+use Test::More 0.88 tests => 5;
 
 use DateTimeX::Seinfeld ();
 
@@ -243,6 +243,15 @@ test(['2012-01-02', { days => 1}, sub { shift->day_of_week == 7 } ],
    },
    marked_periods => 21,
    total_periods  => 49,
+ }
+);
+
+#---------------------------------------------------------------------
+test(['2012-01-01', { weeks => 1 }],
+ [],
+ {
+   marked_periods => 0,
+   total_periods  => 0,
  }
 );
 
