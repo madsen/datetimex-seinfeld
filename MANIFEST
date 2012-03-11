@@ -8,5 +8,6 @@ README
 lib/DateTimeX/Seinfeld.pm
 t/00-all_prereqs.t
 t/00-load.t
+t/10-chains.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t

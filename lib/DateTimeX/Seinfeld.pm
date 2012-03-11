@@ -14,21 +14,81 @@ package DateTimeX::Seinfeld;
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either the
 # GNU General Public License or the Artistic License for more details.
 #
-# ABSTRACT:
+# ABSTRACT: Calculate Seinfeld chain length
 #---------------------------------------------------------------------
 
-use 5.008;
-use strict;
-use warnings;
+use 5.010;
+use Moose;
+use namespace::autoclean;
+
+use MooseX::Types::DateTime (); # Just load coercions
 
 our $VERSION = '0.01';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
 
+has start_date => (
+  is       => 'ro',
+  isa      => 'DateTime',
+  coerce   => 1,
+  required => 1,
+);
+
+has increment => (
+  is       => 'ro',
+  isa      => 'DateTime::Duration',
+  coerce   => 1,
+  required => 1,
+);
+
+#=====================================================================
+
+sub find_chains
+{
+  my ($self, $dates) = @_;
+
+  my %info;
+
+  my $end = $self->start_date->clone;
+  my $inc = $self->increment;
+
+  if (@$dates and $dates->[0] < $end) {
+    confess "start_date ($end) must be before first date ($dates->[0])";
+  }
+
+  for my $d (@$dates) {
+    next if $d < $end; # Event occurs in a period already accounted for
+
+    my $count = 0;
+    while ($d >= $end) {
+      ++$count;
+      $end->add_duration($inc);
+    }
+
+    undef $info{last} if $count > 1; # the chain broke
+
+    $info{last} ||= {
+      start_event  => $d,
+      start_period => $end->clone->subtract_duration( $inc ),
+    };
+
+    ++$info{last}{length};
+    $info{last}{end_event}  = $d;
+    $info{last}{end_period} = $end->clone;
+
+    if (not $info{longest} or $info{longest}{length} < $info{last}{length}) {
+      $info{longest} = $info{last};
+    }
+  } # end for each $d in @$dates
+
+  return \%info;
+} # end find_chains
+
 #=====================================================================
 # Package Return Value:
 
+__PACKAGE__->meta->make_immutable;
 1;
 
 __END__
@@ -36,3 +96,15 @@ __END__
 =head1 SYNOPSIS
 
   use DateTimeX::Seinfeld;
+
+  my $seinfeld = DateTimeX::Seinfeld->new(
+    start_date => $starting_datetime,
+    increment  => { weeks => 1 },
+  );
+
+  my $chains = $seinfeld->find_chains( \@list_of_datetimes );
+
+  say "Longest chain: $chains->{longest}{length}";
+  say "First event in longest chain: $chains->{longest}{start_event}";
+
+=cut

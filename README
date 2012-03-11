@@ -1,7 +1,8 @@
 DateTimeX-Seinfeld version {{$version}}, released {{$date}}
 
 
-This module {{ die "needs a description (README.md too)" }}.
+This module calculates the the maximum Seinfeld chain length from
+a sorted list of DateTime objects.
 
 
 
