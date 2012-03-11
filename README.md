@@ -1,7 +1,7 @@
 DateTimeX::Seinfeld
 ===================
 
-DateTimeX::Seinfeld is a Perl module that calculates the the maximum Seinfeld chain length from a sorted list of `DateTime` objects.
+DateTimeX::Seinfeld is a Perl module that calculates the the maximum [Seinfeld chain](http://lifehacker.com/281626/jerry-seinfelds-productivity-secret) length from a sorted list of `DateTime` objects.
 
 This is a Git repository where development of DateTimeX-Seinfeld takes place.  For more information, visit [DateTimeX-Seinfeld on CPAN](http://search.cpan.org/dist/DateTimeX-Seinfeld/).
 
