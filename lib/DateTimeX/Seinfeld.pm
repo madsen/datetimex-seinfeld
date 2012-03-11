@@ -84,11 +84,11 @@ has skip => (
 
   $info = $seinfeld->find_chains( \@events );
 
-This calculates the Seinfeld chain from the events in C<@events>
-(which must be sorted in ascending order).  Note that you must pass an
-array reference, not a list.
+This calculates the Seinfeld chain from the events in C<@events> (an
+array of DateTime objects which must be sorted in ascending order).
+Note that you must pass an array reference, not a list.
 
-On return, C<$info> will contain a hashref describing the results.
+The return value is a hashref describing the results.
 
 Two keys describe the number of periods.  C<total_periods> is the
 number of periods between the C<start_date> and
@@ -97,10 +97,12 @@ periods that contained at least one event.  If C<marked_periods>
 equals C<total_periods>, then the events form a single chain of the
 same length.
 
-Two keys describe the chains: C<last> (the
-last chain of events found) and C<longest> (the longest chain found).
-These may be the same chain.  The value of each key is a hashref
-describing that chain with the following keys:
+Two keys describe the chains: C<last> (the last chain of events found)
+and C<longest> (the longest chain found).  These may be the same chain
+(in which case the values will be references to the same hash).  If
+there are multiple chains of the same length, C<longest> will be the
+first such chain.  The value of each key is a hashref describing that
+chain with the following keys:
 
 =over
 
@@ -111,7 +113,10 @@ The DateTime of the start of the period containg the first event of the chain.
 =item C<end_period>
 
 The DateTime of the start of the period where the chain broke
-(i.e. the first period that didn't contain an event).
+(i.e. the first period that didn't contain an event).  If this is
+greater than or equal to the period containing the current date, then
+the chain may still be extended.  Otherwise, the chain is already
+broken, and a future event would start a new chain.
 
 =item C<start_event>
 
@@ -226,7 +231,8 @@ having to do something every day, you can make it every week, or every
 month, or any other period that can be defined by a
 L<DateTime::Duration>.
 
-Some definitions: B<period> is the time period during which some B<event>
-must occur.
+Some definitions: B<period> is the time period during which some
+B<event> must occur.  More than one event may occur in a single
+period, but the period is only counted once.
 
 =cut
