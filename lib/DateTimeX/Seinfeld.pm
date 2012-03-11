@@ -65,7 +65,7 @@ This is a CodeRef that allows you to skip specified periods.  It is
 called with one argument, the DateTime at which the period begins.  If
 the CodeRef returns true, any events taking place during this period
 are instead considered to take place in the next period.  (The CodeRef
-must not change the DateTime object it was given.)  (optional)
+must not modify the DateTime object it was given.)  (optional)
 
 For example, to skip Sundays:
 
@@ -114,9 +114,10 @@ The DateTime of the start of the period containg the first event of the chain.
 
 The DateTime of the start of the period where the chain broke
 (i.e. the first period that didn't contain an event).  If this is
-greater than or equal to the period containing the current date, then
-the chain may still be extended.  Otherwise, the chain is already
-broken, and a future event would start a new chain.
+greater than or equal to the period containing the current date (see
+L</period_containing>), then the chain may still be extended.
+Otherwise, the chain is already broken, and a future event would start
+a new chain.
 
 =item C<start_event>
 
@@ -152,21 +153,13 @@ sub find_chains
 
   my $end = $self->start_date->clone;
   my $inc = $self->increment;
-  my $skip = $self->skip;
 
   if (@$dates and $dates->[0] < $end) {
     confess "start_date ($end) must be before first date ($dates->[0])";
   }
 
   for my $d (@$dates) {
-    my $count = 0;
-    my $skip_this;
-    while ($d >= $end) {
-      $skip_this = $skip && $skip->($end);
-      $end->add_duration($inc);
-      redo if $skip_this;
-      ++$count;
-    }
+    my $count = $self->_find_period($d, $end);
 
     undef $info{last} if $count > 1; # the chain broke
 
@@ -192,6 +185,56 @@ sub find_chains
   return \%info;
 } # end find_chains
 
+#---------------------------------------------------------------------
+# Find the start of the first period *after* date:
+#
+# Returns the number of increments that had to be added to $end to
+# make it greater than $date.
+
+sub _find_period
+{
+  my ($self, $date, $end) = @_;
+
+  my $count = 0;
+  my $inc   = $self->increment;
+  my $skip  = $self->skip;
+
+  my $skip_this;
+  while ($date >= $end) {
+    $skip_this = $skip && $skip->($end);
+    $end->add_duration($inc);
+    redo if $skip_this;
+    ++$count;
+  }
+
+  return $count;
+} # end _find_period
+#---------------------------------------------------------------------
+
+=method period_containing
+
+  $start = $seinfeld->period_containing( $date );
+
+Returns the DateTime at which the period containing C<$date> (a
+DateTime) begins.
+
+Note: If C<$date> occurs during a period that is skipped, then
+C<$start> will be greater than C<$date>.  Otherwise, C<$start> is
+always less than or equal to C<$date>.
+
+=cut
+
+sub period_containing
+{
+  my ($self, $date) = @_;
+
+  my $end = $self->start_date->clone;
+
+  $self->_find_period($date, $end);
+
+  $end->subtract_duration( $self->increment );
+} # end period_containing
+
 #=====================================================================
 # Package Return Value:
 
@@ -213,6 +256,9 @@ __END__
 
   say "Longest chain: $chains->{longest}{length}";
   say "First event in longest chain: $chains->{longest}{start_event}";
+  say "The current chain may continue"
+    if $chains->{last}{end_period}
+       >= $seinfeld->period_containing( DateTime->now );
 
 =head1 DESCRIPTION
 
