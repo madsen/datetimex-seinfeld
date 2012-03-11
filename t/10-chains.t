@@ -10,7 +10,7 @@ use 5.010;
 use strict;
 use warnings;
 
-use Test::More 0.88 tests => 3;
+use Test::More 0.88 tests => 4;
 
 use DateTimeX::Seinfeld ();
 
@@ -26,12 +26,18 @@ sub dt # Trivial parser to create DateTime objects
 #---------------------------------------------------------------------
 sub test
 {
-  my ($start, $inc, $dates, $expected) = @_;
+  my ($args, $dates, $expected) = @_;
 
   local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-  my $seinfeld = DateTimeX::Seinfeld->new( start_date => dt($start),
-                                           increment  => $inc );
+  my %args;
+  @args{qw(start_date increment skip)} = @$args;
+
+  while (my ($k, $v) = each %args) { delete $args{$k} unless defined $v }
+
+  $args{start_date} = dt($args{start_date});
+
+  my $seinfeld = DateTimeX::Seinfeld->new( \%args );
 
   $_ = dt($_) for @$dates;
   my $got = $seinfeld->find_chains($dates);
@@ -42,7 +48,8 @@ sub test
       diag(sprintf "   %-7s => {\n", $type);
       my $entry = $got->{$type};
 
-      for my $key (qw(start_period end_period start_event end_event length)) {
+      for my $key (qw(start_period end_period start_event end_event
+                      length num_events)) {
         my $value = $entry->{$key};
         if (ref $value) {
           $value = $value->ymd . ' ' . $value->hms;
@@ -67,7 +74,7 @@ sub both
 
 #---------------------------------------------------------------------
 
-test('2012-01-01', { weeks => 1 },
+test(['2012-01-01', { weeks => 1 }],
  [qw(
    2012-01-02
    2012-01-10
@@ -89,6 +96,7 @@ test('2012-01-01', { weeks => 1 },
      start_event  => dt('2012-01-02'),
      end_event    => dt('2012-02-11'),
      length       => 6,
+     num_events   => 6,
    },
    last    => {
      start_period => dt('2012-02-19'),
@@ -96,12 +104,13 @@ test('2012-01-01', { weeks => 1 },
      start_event  => dt('2012-02-19'),
      end_event    => dt('2012-03-30'),
      length       => 6,
+     num_events   => 6,
    }
  }
 );
 
 #---------------------------------------------------------------------
-test('2012-01-01', { weeks => 1 },
+test(['2012-01-01', { weeks => 1 }],
  [qw(
    2012-01-02
    2012-01-10
@@ -124,12 +133,13 @@ test('2012-01-01', { weeks => 1 },
      start_event  => dt('2012-02-19'),
      end_event    => dt('2012-04-04'),
      length       => 7,
+     num_events   => 7,
    })
  }
 );
 
 #---------------------------------------------------------------------
-test('2012-01-01', { days => 1 },
+test(['2012-01-01', { days => 1 }],
  [qw(
    2012-02-02
    2012-02-03
@@ -163,6 +173,7 @@ test('2012-01-01', { days => 1 },
      start_event  => dt('2012-02-02'),
      end_event    => dt('2012-02-19'),
      length       => 18,
+     num_events   => 18,
    },
    last    => {
      start_period => dt('2012-02-21'),
@@ -170,6 +181,55 @@ test('2012-01-01', { days => 1 },
      start_event  => dt('2012-02-21'),
      end_event    => dt('2012-02-26'),
      length       => 6,
+     num_events   => 6,
+   },
+ }
+);
+
+#---------------------------------------------------------------------
+test(['2012-01-01', { days => 1}, sub { shift->day_of_week == 7 } ],
+ [qw(
+   2012-02-02
+   2012-02-03
+   2012-02-04
+   2012-02-05
+   2012-02-06
+   2012-02-07
+   2012-02-08
+   2012-02-09
+   2012-02-10
+   2012-02-11
+   2012-02-12
+   2012-02-13
+   2012-02-14
+   2012-02-15
+   2012-02-16
+   2012-02-17
+   2012-02-18
+   2012-02-19
+   2012-02-20
+   2012-02-22
+   2012-02-23
+   2012-02-24
+   2012-02-25
+   2012-02-26
+ )],
+ {
+   longest => {
+     start_period => dt('2012-02-02'),
+     end_period   => dt('2012-02-21'),
+     start_event  => dt('2012-02-02'),
+     end_event    => dt('2012-02-20'),
+     length       => 16,
+     num_events   => 19,
+   },
+   last    => {
+     start_period => dt('2012-02-22'),
+     end_period   => dt('2012-02-28'),
+     start_event  => dt('2012-02-22'),
+     end_event    => dt('2012-02-26'),
+     length       => 5,
+     num_events   => 5,
    },
  }
 );

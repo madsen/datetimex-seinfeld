@@ -21,6 +21,7 @@ use 5.010;
 use Moose;
 use namespace::autoclean;
 
+use MooseX::Types::Moose qw(CodeRef);
 use MooseX::Types::DateTime (); # Just load coercions
 
 our $VERSION = '0.01';
@@ -42,6 +43,11 @@ has increment => (
   required => 1,
 );
 
+has skip => (
+  is       => 'ro',
+  isa      => CodeRef,
+);
+
 #=====================================================================
 
 sub find_chains
@@ -52,18 +58,20 @@ sub find_chains
 
   my $end = $self->start_date->clone;
   my $inc = $self->increment;
+  my $skip = $self->skip;
 
   if (@$dates and $dates->[0] < $end) {
     confess "start_date ($end) must be before first date ($dates->[0])";
   }
 
   for my $d (@$dates) {
-    next if $d < $end; # Event occurs in a period already accounted for
-
     my $count = 0;
+    my $skip_this;
     while ($d >= $end) {
-      ++$count;
+      $skip_this = $skip && $skip->($end);
       $end->add_duration($inc);
+      redo if $skip_this;
+      ++$count;
     }
 
     undef $info{last} if $count > 1; # the chain broke
@@ -73,7 +81,8 @@ sub find_chains
       start_period => $end->clone->subtract_duration( $inc ),
     };
 
-    ++$info{last}{length};
+    ++$info{last}{num_events};
+    ++$info{last}{length} if $count; # first event in period
     $info{last}{end_event}  = $d;
     $info{last}{end_period} = $end->clone;
 
