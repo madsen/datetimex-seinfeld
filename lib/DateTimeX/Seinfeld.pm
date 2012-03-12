@@ -24,7 +24,7 @@ use namespace::autoclean;
 use MooseX::Types::Moose qw(CodeRef);
 use MooseX::Types::DateTime (); # Just load coercions
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
@@ -162,7 +162,7 @@ sub find_chains
 {
   my ($self, $dates) = @_;
 
-  my %info = (total_periods => 0, marked_periods => 0);
+  my $info = {total_periods => 0, marked_periods => 0};
 
   my $end = $self->start_date->clone;
   my $inc = $self->increment;
@@ -174,28 +174,29 @@ sub find_chains
   for my $d (@$dates) {
     my $count = $self->_find_period($d, $end);
 
-    undef $info{last} if $count > 1; # the chain broke
+    undef $info->{last} if $count > 1; # the chain broke
 
-    $info{last} ||= {
+    $info->{last} ||= {
       start_event  => $d,
       start_period => $end->clone->subtract_duration( $inc ),
     };
 
-    ++$info{last}{num_events};
+    ++$info->{last}{num_events};
     if ($count) { # first event in period
-      ++$info{last}{length};
-      ++$info{marked_periods};
-      $info{total_periods} += $count;
+      ++$info->{last}{length};
+      ++$info->{marked_periods};
+      $info->{total_periods} += $count;
     }
-    $info{last}{end_event}  = $d;
-    $info{last}{end_period} = $end->clone;
+    $info->{last}{end_event}  = $d;
+    $info->{last}{end_period} = $end->clone;
 
-    if (not $info{longest} or $info{longest}{length} < $info{last}{length}) {
-      $info{longest} = $info{last};
+    if (not $info->{longest}
+        or $info->{longest}{length} < $info->{last}{length}) {
+      $info->{longest} = $info->{last};
     }
   } # end for each $d in @$dates
 
-  return \%info;
+  return $info;
 } # end find_chains
 
 #---------------------------------------------------------------------
