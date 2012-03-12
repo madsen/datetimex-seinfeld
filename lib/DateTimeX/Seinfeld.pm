@@ -90,6 +90,7 @@ has skip => (
 =method find_chains
 
   $info = $seinfeld->find_chains( \@events );
+  $info = $seinfeld->find_chains( \@events, $info ); # continue search
 
 This calculates Seinfeld chains from the events in C<@events> (an
 array of DateTime objects which must be sorted in ascending order).
@@ -151,6 +152,16 @@ Note: If C<@events> is empty, then C<last> and C<longest> will not
 exist in the hash.  Otherwise, there will always be at least one
 chain, even if only of length 1.
 
+If you are monitoring an ongoing sequence of events, it would be
+wasteful to have to start each search from the first event.  Instead,
+you can pass the hashref returned by the first search to
+C<find_chains>, along with just the new events.  To simplify this, it
+is not necessary that C<last> and C<longest> reference the same hash
+if they are the same chain.  If they have the same C<start_period>,
+then C<find_chains> will link them automatically.  When continuing a
+search, the C<start_date> is ignored.  Instead, the search resumes
+from C<< $info->{last}{end_period} >>.
+
 =diag C<start_date (%s) must be before first date (%s)>
 
 You must not pass an event to C<find_chains> that occurs before the
@@ -160,14 +171,27 @@ C<start_date> of the first period.
 
 sub find_chains
 {
-  my ($self, $dates) = @_;
+  my ($self, $dates, $info) = @_;
 
-  my $info = {total_periods => 0, marked_periods => 0};
+  # If we were passed $info, continue a previous search:
+  my $end;
+  if ($info and %$info) {
+    if ($info->{last} and $info->{longest} and
+        $info->{last} != $info->{longest} and
+        $info->{last}{start_period} == $info->{longest}{start_period}) {
 
-  my $end = $self->start_date->clone;
+      $info->{longest} = $info->{last};
+    } # end if last and longest are the same chain
+
+    $end = $info->{last}{end_period} if $info->{last};
+  } else {
+    $info = {total_periods => 0, marked_periods => 0};
+  }
+
+  $end ||= $self->start_date->clone;
   my $inc = $self->increment;
 
-  if (@$dates and $dates->[0] < $end) {
+  if (not $info->{last} and @$dates and $dates->[0] < $end) {
     confess "start_date ($end) must be before first date ($dates->[0])";
   }
 
