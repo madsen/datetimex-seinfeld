@@ -10,7 +10,7 @@ use 5.010;
 use strict;
 use warnings;
 
-use Test::More 0.88 tests => 9;
+use Test::More 0.88 tests => 10;
 
 use DateTimeX::Seinfeld ();
 
@@ -54,7 +54,7 @@ sub test
 
       for my $key (qw(start_period end_period start_event end_event
                       length num_events)) {
-        my $value = $entry->{$key};
+        my $value = $entry->{$key} // next;
         if (ref $value) {
           $value = $value->ymd . ' ' . $value->hms;
           $value =~ s/:00$//;
@@ -156,6 +156,36 @@ test('continue search',
    }),
    marked_periods => 13,
    total_periods  => 14,
+ }
+);
+
+#---------------------------------------------------------------------
+test('continue with incomplete data',
+ ['2012-01-01', { weeks => 1 }],
+ {
+   longest => {
+     start_period => dt('2012-01-01'),
+     length       => 6,
+   },
+   last    => {
+     start_period => dt('2012-02-19'),
+     end_period   => dt('2012-04-01'),
+     length       => 6,
+   },
+ },
+ [qw(
+   2012-04-07
+ )],
+ {
+   both({
+     start_period => dt('2012-02-19'),
+     end_period   => dt('2012-04-08'),
+     end_event    => dt('2012-04-07'),
+     length       => 7,
+     num_events   => 1,
+   }),
+   marked_periods => 1,
+   total_periods  => 1,
  }
 );
 

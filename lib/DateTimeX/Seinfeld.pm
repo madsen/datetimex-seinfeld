@@ -162,6 +162,12 @@ then C<find_chains> will link them automatically.  When continuing a
 search, the C<start_date> is ignored.  Instead, the search resumes
 from C<< $info->{last}{end_period} >>.
 
+The only fields that you I<must> supply in order to continue a calculation
+are C<start_period>, C<end_period>, & C<length> in C<< $info->{last} >>,
+and C<start_period> & C<length> in C<< $info->{longest} >>.
+However, any field that you don't supply can't be expected to hold
+valid data afterwards.
+
 =diag C<start_date (%s) must be before first date (%s)>
 
 You must not pass an event to C<find_chains> that occurs before the
@@ -317,7 +323,8 @@ month, or any other period that can be defined by a
 L<DateTime::Duration>.
 
 Some definitions: B<period> is the time period during which some
-B<event> must occur.  More than one event may occur in a single
-period, but the period is only counted once.
+B<event> must occur in order to keep the chain from breaking.  More
+than one event may occur in a single period, but the period is only
+counted once.
 
 =cut
