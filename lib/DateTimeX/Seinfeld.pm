@@ -155,18 +155,25 @@ chain, even if only of length 1.
 If you are monitoring an ongoing sequence of events, it would be
 wasteful to have to start each search from the first event.  Instead,
 you can pass the hashref returned by the first search to
-C<find_chains>, along with just the new events.  To simplify this, it
-is not necessary that C<last> and C<longest> reference the same hash
-if they are the same chain.  If they have the same C<start_period>,
-then C<find_chains> will link them automatically.  When continuing a
-search, the C<start_date> is ignored.  Instead, the search resumes
-from C<< $info->{last}{end_period} >>.
+C<find_chains>, along with just the new events.  The hashref you pass
+will be modifed (the same hashref will be returned).  To simplify
+this, it is not necessary that C<last> and C<longest> reference the
+same hash if they are the same chain.  If they have the same
+C<start_period>, then C<find_chains> will link them automatically.
+When continuing a search, the C<start_date> is ignored.  Instead, the
+search resumes from C<< $info->{last}{end_period} >>.
 
 The only fields that you I<must> supply in order to continue a calculation
 are C<start_period>, C<end_period>, & C<length> in C<< $info->{last} >>,
 and C<start_period> & C<length> in C<< $info->{longest} >>.
 However, any field that you don't supply can't be expected to hold
 valid data afterwards.
+
+When continuing a calculation, C<@events> should not include any dates
+before C<< $info->{last}{end_event} >>.  If you disregard this rule,
+any events less than C<< $info->{last}{end_period} >> are considered
+to have occurred in the previous period (even if they actually
+occurred in an even earlier period).
 
 =diag C<start_date (%s) must be before first date (%s)>
 
