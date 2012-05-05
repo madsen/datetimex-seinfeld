@@ -24,15 +24,25 @@ use namespace::autoclean;
 use MooseX::Types::Moose qw(CodeRef);
 use MooseX::Types::DateTime (); # Just load coercions
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
 
+=head1 DEPENDENCIES
+
+DateTimeX::Seinfeld requires
+{{$t->dependency_link('Moose')}},
+{{$t->dependency_link('namespace::autoclean')}},
+{{$t->dependency_link('MooseX::Types::DateTime')}},
+{{$t->dependency_link('MooseX::Types::Moose')}},
+and Perl 5.10.0 or later.
+
 =attr start_date
 
-This is the DateTime of the beginning of the first period.  All events
-passed to C<find_chains> must be greater than or equal to this value.
+This is the DateTime (or a hashref acceptable to C<< DateTime->new >>)
+of the beginning of the first period.  All events passed to
+C<find_chains> must be greater than or equal to this value.
 (required)
 
 =cut
@@ -46,9 +56,9 @@ has start_date => (
 
 =attr increment
 
-This is the DateTime::Duration giving the length of each period.  You
-may also pass a hashref acceptable to the DateTime::Duration
-constructor.  (required)
+This is the DateTime::Duration (or a hashref acceptable to
+C<< DateTime::Duration->new >>) giving the length of each period.
+(required)
 
 =cut
 
@@ -156,10 +166,11 @@ If you are monitoring an ongoing sequence of events, it would be
 wasteful to have to start each search from the first event.  Instead,
 you can pass the hashref returned by the first search to
 C<find_chains>, along with just the new events.  The hashref you pass
-will be modifed (the same hashref will be returned).  To simplify
+will be modified (the same hashref will be returned).  To simplify
 this, it is not necessary that C<last> and C<longest> reference the
 same hash if they are the same chain.  If they have the same
-C<start_period>, then C<find_chains> will link them automatically.
+C<start_period>, then C<find_chains> will link them automatically (by
+setting S<C<< $info->{longest} = $info->{last} >>>).
 When continuing a search, the C<start_date> is ignored.  Instead, the
 search resumes from C<< $info->{last}{end_period} >>.
 

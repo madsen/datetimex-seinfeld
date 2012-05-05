@@ -1,5 +1,8 @@
 Revision history for DateTimeX-Seinfeld
 
+0.03   NOT
+	- Minor improvements to documentation
+
 0.02   March 13, 2012
 	- API change to allow find_chains to continue where it left off
 
