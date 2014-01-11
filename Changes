@@ -1,5 +1,9 @@
 Revision history for DateTimeX-Seinfeld
 
+1.000  NOT
+	- No functional changes
+	- Release tests moved to xt/
+
 0.03   2012-05-05
 	- Minor improvements to documentation
 	- No functional changes

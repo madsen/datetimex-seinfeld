@@ -24,7 +24,7 @@ use namespace::autoclean;
 use MooseX::Types::Moose qw(CodeRef);
 use MooseX::Types::DateTime (); # Just load coercions
 
-our $VERSION = '0.03';
+our $VERSION = '1.000';
 # This file is part of {{$dist}} {{$dist_version}} ({{$date}})
 
 #=====================================================================
